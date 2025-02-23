@@ -12,9 +12,6 @@ const validate = (params) => {
     let email =  !validator.isEmpty(params.email) &&
                 validator.isEmail(params.email);
 
-    let password =  !validator.isEmpty(params.password) &&
-                validator.isLength(params.password, {min: 8, max: undefined});
-
     if(params.surname){
         let surname =  !validator.isEmpty(params.surname) &&
                         validator.isLength(params.surname, {min: 3, max: undefined}) &&
@@ -27,6 +24,21 @@ const validate = (params) => {
             };
         }
     }
+
+    if(!params.password){
+        if(!name || !nick || !email){
+            return {
+                status: "error",
+                message: "Validación no pasada."
+            };
+        }
+        return {status: "success"};
+    }
+
+    let password =  !validator.isEmpty(params.password) &&
+                validator.isLength(params.password, {min: 8, max: undefined});
+
+    
 
     if(!name || !nick || !email || !password){
         return {

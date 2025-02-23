@@ -168,10 +168,83 @@ const profile = async (req, res) => {
   
 };
 
+const update = async (req, res) => {
+
+  // Recoger datos del usuario identificado
+  let userIdentity = req.user;
+
+  // Recoger datos a actualizar
+  let userToUpdate = req.body;
+
+  // Validar datos
+  let validateResponse= validate(userToUpdate);
+  if(validateResponse.status=="error"){
+    return res.status(400).send(validateResponse)
+  }
+
+  // Comprobar si el usuario existe
+  let issetUser;
+  try{
+    issetUser= await User.find({
+      $or : [
+        {email: userToUpdate.email.toLowerCase()},
+        {nick: userToUpdate.nick.toLowerCase()}
+      ]
+    }).exec();
+  }catch(error){
+    return res.status(500).send({
+      status: "error",
+      message: "Error buscando el usuario."
+    });
+  }
+
+  // Comprobar si el usuario existe y no soy yo
+  issetUser.forEach(user => {
+    if(userIdentity.id != user._id){
+      // Si ya existe, devuelvo una respuesta
+      return res.status(400).send({
+        status: "error",
+        message: "Los datos ya pertenecen a otro usuario existente."
+      });
+    }
+  });
+
+  // Volver a cifrar contraseña si llega
+  if(userToUpdate.password){
+    let pwd = await bcrypt.hash(userToUpdate.password, 10);
+    userToUpdate.password = pwd;
+  }
+
+  // Buscar y actualizar
+  try{
+    let userUpdated = await User.findByIdAndUpdate({_id: userIdentity.id}, userToUpdate, {new: true});
+
+    // Devolver respuesta
+    if (!userUpdated){
+      return res.status(400).send({
+        status: "error",
+        message: "Error actualizando el usuario."
+      });
+    }
+    return res.status(200).send({
+      status: "success",
+      message: "Usuario actualizado.",
+      userUpdated
+    });
+  }catch(error){
+    console.log(error);
+    return res.status(500).send({
+      status: "error",
+      message: "Error actualizando el usuario.",
+    });
+  }
+}
+
 // Exportar acciones
 module.exports = {
   prueba,
   register,
   login,
-  profile
+  profile,
+  update
 };

@@ -13,6 +13,7 @@ router.get("/prueba-user", userController.prueba);
 router.post("/register", userController.register);
 router.post("/login", userController.login);
 router.get("/profile/:id?", check.auth,userController.profile);
+router.put("/update", check.auth,userController.update);
 
 // Exportar rutas
 module.exports = router;
