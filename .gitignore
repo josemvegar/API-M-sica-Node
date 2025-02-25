@@ -2,4 +2,5 @@
 uploads/avatars/*
 
 # Pero mantener la carpeta avatars (evitar que se elimine)
+!uploads
 !uploads/avatars/
