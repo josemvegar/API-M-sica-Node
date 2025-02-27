@@ -1,6 +1,9 @@
 # Ignorar todo el contenido de la carpeta avatars
 uploads/avatars/*
+uploads/artists/*
 
 # Pero mantener la carpeta avatars y el archivo .gitkeep
 !uploads/avatars/
 !uploads/avatars/.gitkeep
+!uploads/artists/
+!uploads/artists/.gitkeep
