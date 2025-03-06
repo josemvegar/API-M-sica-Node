@@ -3,6 +3,8 @@ const Artist = require("../models/Artists");
 const mongoosePagination = require("mongoose-pagination");
 const fs = require("fs");
 const path = require("path");
+const Album = require("../models/Albums");
+const Song = require("../models/Songs");
 
 // Acción de prueba
 const prueba = (req, res) => {
@@ -146,15 +148,19 @@ const remove = async (req, res) =>{
             });
         }
 
-        // Eliminar canciones
-
         // Eliminar album
+        const albumRemoved = await Album.find({artist: id}).remove();
+
+        // Eliminar canciones del artista
+        const songRemoved = await Song.find({album: albumRemoved._id}).remove();
 
         // Devolver resultado
         return res.status(200).send({
             status: "success",
             message: "Artista eliminado.",
-            artistToRemove
+            artistToRemove,
+            albumRemoved,
+            songRemoved
         });
     }catch(error){
         return res.status(500).send({
