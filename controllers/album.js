@@ -1,4 +1,6 @@
 const Albums = require("../models/Albums");
+const fs = require("fs");
+const path = require("path");
 
 // Acción de prueba
 const prueba = (req, res) => {
@@ -97,10 +99,129 @@ const list = async (req, res) =>{
     // Devolver resultado
 }
 
+const update = async (req, res) => {
+
+    // Regoger parametro de la url (ID)
+    const albumId = req.params.id;
+
+    // Body con los datos a actualizar
+    const data = req.body;
+
+    // Find y Update
+    try{
+        const albumUpdated = await Albums.findByIdAndUpdate(albumId, data, {new: true});
+        //  Devolver resultado
+
+        if(!albumUpdated){
+            return res.status(404).send({
+                status: "error",
+                message: "El album ingresado no existe."
+            })
+        }
+
+        return res.status(200).send({
+            status: "success",
+            message: "Actualizar.",
+            albumUpdated
+        })
+    }catch(error){
+        return res.status(500).send({
+            status: "error",
+            message: "Error al actualizar el album."
+        })
+    }
+
+    
+}
+
+const upload = async (req, res) => {
+
+    // Recoger fichero de imagen y comprobar si existe
+    if(!req.file){
+      return res.status(404).send({
+        status: "error",
+        message: "La petición no incluye la imagen."
+      });
+    }
+  
+    // Conseguir el nombre del archivo
+    const image = req.file.originalname;
+  
+    // Sacar info de la imagen
+    const imageSplit = image.split("\.");
+    const extension = imageSplit[1];
+  
+    // Comprobar si la extención es válida
+    if(extension!="png" && extension!="jpg" && extension!="jpeg" && extension!="gif"){
+      // Borrar archivo y devolver respuesta.
+      const filePath = req.file.path;
+      const fileDeleted = fs.unlinkSync(filePath);
+      return res.status(400).send({
+        status: "error",
+        message: "La extención no es válida."
+      });
+    }
+  
+    // Si todo es correcto, se guarda la imagen en disco duro y bd
+    try{
+      const albumUpdated = await Albums.findOneAndUpdate({_id: req.params.id}, {image: req.file.filename}, {new: true}).exec();
+  
+      if(!albumUpdated){
+          return res.status(404).send({
+              status: "error",
+              message: "El album no existe."
+          });
+      }
+  
+      // Enviar respuesta
+      return res.status(200).send({
+        status: "success",
+        album: albumUpdated
+      });
+    }catch(error){
+      console.log(error);
+      fs.unlinkSync(req.file.path);
+      return res.status(500).send({
+        status: "error",
+        message: "Error en la subida de la imagen."
+      });
+    }
+    
+  }
+
+  const albumImage = (req, res) =>{
+  
+    // Sacar el parámetro de la url
+    const file= req.params.file;
+  
+    // Mostrar el path real de la imagen
+    const filePath = path.join(__dirname, "../uploads/albums", file);
+    console.log(filePath);
+  
+    // Comprobar que existe el fichero
+    fs.stat(filePath, (error, exists)=>{
+      
+      if(error || !exists){
+        return res.status(404).send({
+          status: "error",
+          message: "La imagen no existe."
+        });
+      }
+  
+      // Devolver el fichero
+      return res.status(200).sendFile(filePath);
+  
+    });
+  
+  }
+
 // Exportar acciones
 module.exports = {
     prueba,
     save,
     one,
-    list
+    list,
+    update,
+    upload,
+    albumImage
 }
