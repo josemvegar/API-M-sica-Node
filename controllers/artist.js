@@ -232,7 +232,7 @@ const upload = async (req, res) => {
       message: "Error en la subida de la imagen."
     });
   }
-  
+
 }
 
 const artistImage = (req, res) =>{
