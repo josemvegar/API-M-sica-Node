@@ -29,6 +29,7 @@ router.get("/list/:artistid", check.auth, albumController.list);
 router.put("/update/:id", check.auth, albumController.update);
 router.put("/upload/:id", [check.auth, uploads.single("file0")], albumController.upload);
 router.get("/image/:file", albumController.albumImage);
+router.delete("/remove/:id", check.auth, albumController.remove);
 
 // Exportar rutas
 module.exports = router;

@@ -1,4 +1,6 @@
 const Song = require("../models/Songs");
+const fs = require("fs");
+const path = require("path");
 
 // Acción de prueba
 const prueba = (req, res) => {
@@ -41,19 +43,19 @@ const upload = async (req, res) => {
   if(!req.file){
     return res.status(404).send({
       status: "error",
-      message: "La petición no incluye la imagen."
+      message: "La petición no incluye el audio."
     });
   }
 
   // Conseguir el nombre del archivo
-  const image = req.file.originalname;
+  const song = req.file.originalname;
 
   // Sacar info de la imagen
-  const imageSplit = image.split("\.");
-  const extension = imageSplit[1];
+  const songSplit = song.split("\.");
+  const extension = songSplit[1];
 
   // Comprobar si la extención es válida
-  if(extension!="png" && extension!="jpg" && extension!="jpeg" && extension!="gif"){
+  if(extension!="mp3" && extension!="ogg"){
     // Borrar archivo y devolver respuesta.
     const filePath = req.file.path;
     const fileDeleted = fs.unlinkSync(filePath);
@@ -65,29 +67,54 @@ const upload = async (req, res) => {
 
   // Si todo es correcto, se guarda la imagen en disco duro y bd
   try{
-    const artistUpdated = await Artist.findOneAndUpdate({_id: req.params.id}, {image: req.file.filename}, {new: true}).exec();
+    const songUpdated = await Song.findOneAndUpdate({_id: req.params.id}, {file: req.file.filename}, {new: true}).exec();
 
-    if(!artistUpdated){
+    if(!songUpdated){
         return res.status(404).send({
             status: "error",
-            message: "El artista no existe."
+            message: "La canción no existe."
         });
     }
 
     // Enviar respuesta
     return res.status(200).send({
       status: "success",
-      user: artistUpdated
+      song: songUpdated
     });
   }catch(error){
     console.log(error);
     fs.unlinkSync(req.file.path);
     return res.status(500).send({
       status: "error",
-      message: "Error en la subida de la imagen."
+      message: "Error en la subida de la canción."
     });
   }
   
+}
+
+const audio = (req, res) =>{
+
+  // Sacar el parámetro de la url
+  const file= req.params.file;
+
+  // Mostrar el path real de la imagen
+  const filePath = path.join(__dirname, "../uploads/songs", file);
+
+  // Comprobar que existe el fichero
+  fs.stat(filePath, (error, exists)=>{
+    
+    if(error || !exists){
+      return res.status(404).send({
+        status: "error",
+        message: "El audio no existe."
+      });
+    }
+
+    // Devolver el fichero
+    return res.status(200).sendFile(filePath);
+
+  });
+
 }
 
 const one = async (req, res) => {
@@ -159,11 +186,83 @@ const listPerAlbum = async (req, res) => {
   }
 }
 
+const update = async (req, res) => {
+
+  // Recoger parametro de la url
+  const id = req.params.id;
+
+  // Recoger datos para actualizar
+  const data = req.body;
+
+  // Búsqueda y actualización
+  try{
+
+    const songUpdated = await Song.findByIdAndUpdate(id, data, {new:true});
+
+    if(!songUpdated){
+      return res.status(404).send({
+        status: "error",
+        message: "No existe la canción indicada."
+      });
+    }
+
+    // Enviar respuesta
+    return res.status(200).send({
+      status: "success",
+      song: songUpdated
+    });
+
+  }catch(error){
+    console.log(error);
+    return res.status(500).send({
+      status: "error",
+      message: "Error al actualizar la canción."
+    });
+  }
+
+}
+
+const remove = async (req, res) => {
+
+  // recoger parametro por la url
+  const id= req.params.id;
+
+  // Hacer el remove
+  try{
+
+    const songRemoved = await Song.findByIdAndDelete(id);
+    if(!songRemoved){
+      return res.status(404).send({
+        status: "error",
+        message: "La canción enviada no existe."
+      });
+    }
+
+    return res.status(200).send({
+      status: "success",
+      song: songRemoved
+    });
+
+  }catch(error){
+    console.log(error);
+    return res.status(500).send({
+      status: "error",
+      message: "Error al eliminar la canción."
+    });
+  }
+
+  // Enviar respuesta
+
+}
+
 // Exportar acciones
 module.exports = {
     prueba,
     save,
     upload,
     one,
-    listPerAlbum
+    listPerAlbum,
+    update,
+    remove,
+    audio
 }

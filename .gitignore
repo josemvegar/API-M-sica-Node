@@ -2,6 +2,7 @@
 uploads/avatars/*
 uploads/artists/*
 uploads/albums/*
+uploads/songs/*
 
 # Pero mantener la carpeta avatars y el archivo .gitkeep
 !uploads/avatars/
@@ -10,3 +11,5 @@ uploads/albums/*
 !uploads/artists/.gitkeep
 !uploads/albums/
 !uploads/albums/.gitkeep
+!uploads/songs/
+!uploads/songs/.gitkeep

@@ -26,7 +26,6 @@ const save = async (req, res) =>{
     // Guardar y enviar respuesta
     try{
         let artistStored = await artist.save();
-        console.log(artistStored);
         return res.status(200).send({
             status: "success",
             message: "Artista guardado.",
@@ -140,7 +139,8 @@ const remove = async (req, res) =>{
 
     // Consulta para buscar y eliminar
     try{
-        const artistToRemove = await Artist.findByIdAndDelete(id);
+        artistToRemove = await Artist.findByIdAndDelete(id);
+        
         if(!artistToRemove){
             return res.status(404).send({
                 status: "error",
@@ -149,20 +149,30 @@ const remove = async (req, res) =>{
         }
 
         // Eliminar album
-        const albumRemoved = await Album.find({artist: id}).remove();
+        // Encontrar y eliminar los álbumes del artista
+        const albums = await Album.find({ artist: id });
+
+        for (const album of albums) {
+            // Eliminar las canciones asociadas al álbum
+            await Song.deleteMany({ album: album._id });
+
+            // Eliminar el álbum
+            await album.deleteOne();
+        }
 
         // Eliminar canciones del artista
-        const songRemoved = await Song.find({album: albumRemoved._id}).remove();
+        //const songRemoved = await Song.find({album: albumRemoved._id}).remove();
 
         // Devolver resultado
         return res.status(200).send({
             status: "success",
             message: "Artista eliminado.",
             artistToRemove,
-            albumRemoved,
-            songRemoved
+            //albumRemoved,
+            //songRemoved
         });
     }catch(error){
+        console.log(error);
         return res.status(500).send({
             status: "error",
             message: "Error al eliminar artista."
@@ -229,11 +239,9 @@ const artistImage = (req, res) =>{
 
   // Sacar el parámetro de la url
   const file= req.params.file;
-  console.log(file);
 
   // Mostrar el path real de la imagen
   const filePath = path.join(__dirname, "../uploads/artists", file);
-  console.log(filePath);
 
   // Comprobar que existe el fichero
   fs.stat(filePath, (error, exists)=>{

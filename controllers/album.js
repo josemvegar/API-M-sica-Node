@@ -1,4 +1,5 @@
 const Albums = require("../models/Albums");
+const Song = require("../models/Songs");
 const fs = require("fs");
 const path = require("path");
 
@@ -215,6 +216,45 @@ const upload = async (req, res) => {
   
   }
 
+  const remove = async (req, res) =>{
+  
+      // Sacar el ID del artista de la url
+      const id = req.params.id;
+  
+      // Consulta para buscar y eliminar
+      try{
+          albumtoRemove = await Albums.findByIdAndDelete(id);
+          
+          if(!albumtoRemove){
+              return res.status(404).send({
+                  status: "error",
+                  message: "El album no existe."
+              });
+          }
+  
+          // Eliminar album
+          // Encontrar y eliminar los álbumes del artista
+          const songs = await Song.deleteMany({ album: id });
+  
+          // Eliminar canciones del artista
+          //const songRemoved = await Song.find({album: albumRemoved._id}).remove();
+  
+          // Devolver resultado
+          return res.status(200).send({
+              status: "success",
+              message: "Album eliminado.",
+              album: albumtoRemove,
+              songs
+          });
+      }catch(error){
+          console.log(error);
+          return res.status(500).send({
+              status: "error",
+              message: "Error al eliminar Album."
+          });
+      }
+  }
+
 // Exportar acciones
 module.exports = {
     prueba,
@@ -223,5 +263,6 @@ module.exports = {
     list,
     update,
     upload,
-    albumImage
+    albumImage,
+    remove
 }
